@@ -27,21 +27,18 @@
 
 Frame::Frame()
         : storage{},
-          byteStorage{},
           defaultFill{false}
 {
 }
 
 Frame::Frame(const Frame &f)
         : storage{f.storage},
-          byteStorage{},
           defaultFill{f.defaultFill}
 {
 }
 
 Frame::Frame(Frame &&f)
         : storage{std::move(f.storage)},
-          byteStorage{},
           defaultFill{f.defaultFill}
 {
 }
@@ -54,14 +51,12 @@ Frame &Frame::operator=(const Frame &f)
 
 Frame::Frame(size_t frameLength, bool defaultSet)
         : storage(frameLength, FrameEntity{defaultSet}),
-          byteStorage{},
           defaultFill{defaultSet}
 {
 }
 
 Frame::Frame(std::initializer_list<FrameEntity> bytesCollection)
         : storage{bytesCollection},
-          byteStorage{},
           defaultFill{false}
 {
 }
@@ -77,45 +72,45 @@ size_t Frame::size() const
     return this->storage.size();
 }
 
-bool Frame::operator==(const Frame &f) const
+bool Frame::operator==(const Frame &other) const
 {
-    return this->storage == f.storage;
+    return this->storage == other.storage;
 }
 
-bool Frame::operator!=(const Frame &f) const
+bool Frame::operator!=(const Frame &other) const
 {
-    return this->storage != f.storage;
+    return this->storage != other.storage;
 }
 
-Frame &Frame::operator+=(const Frame &f)
+Frame &Frame::operator+=(const Frame &other)
 {
-    std::copy(f.storage.begin(), f.storage.end(), std::back_inserter(this->storage));
+    std::copy(other.storage.begin(), other.storage.end(), std::back_inserter(this->storage));
     return *this;
 }
 
-Frame &Frame::operator+=(const FrameEntity &f)
+Frame &Frame::operator+=(const FrameEntity &other)
 {
-    this->storage.push_back(f);
+    this->storage.push_back(other);
     return *this;
 }
 
-Frame &Frame::operator+=(byte_t f)
+Frame &Frame::operator+=(byte_t other)
 {
-    this->storage.push_back(f);
+    this->storage.push_back(other);
     return *this;
 }
 
-Frame Frame::operator+(const Frame &f) const
+Frame Frame::operator+(const Frame &other) const
 {
     std::vector<FrameEntity> temporaryStorage{this->storage};
-    std::copy(f.storage.begin(), f.storage.end(), std::back_inserter(temporaryStorage));
+    std::copy(other.storage.begin(), other.storage.end(), std::back_inserter(temporaryStorage));
     return Frame{temporaryStorage};
 }
 
-Frame Frame::operator+(const FrameEntity &f) const
+Frame Frame::operator+(const FrameEntity &other) const
 {
     std::vector<FrameEntity> temporaryStorage{this->storage};
-    temporaryStorage.push_back(f);
+    temporaryStorage.push_back(other);
     return Frame{temporaryStorage};
 }
 
@@ -220,7 +215,7 @@ const FrameEntity &Frame::operator[](size_t index) const
     return this->storage[index];
 }
 
-bool Frame::spliceIsValid(size_t beginIndex, size_t endIndex)
+bool Frame::spliceIsValid(size_t beginIndex, size_t endIndex) const
 {
     if (beginIndex > endIndex)
     {
@@ -240,7 +235,7 @@ bool Frame::spliceIsValid(size_t beginIndex, size_t endIndex)
     return true;
 }
 
-Frame Frame::operator()(size_t beginIndex, size_t endIndex)
+Frame Frame::operator()(size_t beginIndex, size_t endIndex) const
 {
     if (beginIndex > endIndex)
     {
@@ -260,16 +255,18 @@ Frame Frame::operator()(size_t beginIndex, size_t endIndex)
     return Frame(temporaryStorage);
 }
 
-void Frame::reverse()
+Frame &Frame::reverse()
 {
     std::reverse(this->storage.begin(), this->storage.end());
+    return *this;
 }
 
-byte_t *Frame::data()
+const byte_t *Frame::data()
 {
-    this->byteStorage.clear();
-    std::copy(this->storage.begin(), this->storage.end(), std::back_inserter(this->byteStorage));
-    return this->byteStorage.data();
+    static std::vector<byte_t> byteStorage;
+    byteStorage.clear();
+    std::copy(this->storage.begin(), this->storage.end(), std::back_inserter(byteStorage));
+    return byteStorage.data();
 }
 
 void Frame::resizeToProvideElementAtIndex(size_t index)

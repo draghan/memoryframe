@@ -23,29 +23,45 @@
 */
 
 #include "FrameEntity.hpp"
+#include <string>
+#include <stdexcept>
 
 template <>
-bool FrameEntity::operator== <const FrameEntity &>(const FrameEntity &other) const
+bool FrameEntity::operator==
+<const FrameEntity &>(
+const FrameEntity &other
+) const
 {
-    return this->storage == other.storage;
+return this->storage == other.
+storage;
 }
 
 template <>
-bool FrameEntity::operator==<byte_exposed_t>(byte_exposed_t other) const
+bool FrameEntity::operator==
+<byte_exposed_t>(byte_exposed_t
+other) const
 {
-    return this->storage == other;
+return this->storage ==
+other;
 }
 
 template <>
-bool FrameEntity::operator!=<const FrameEntity &>(const FrameEntity &other) const
+bool FrameEntity::operator!=
+<const FrameEntity &>(
+const FrameEntity &other
+) const
 {
-    return this->storage != other.storage;
+return this->storage != other.
+storage;
 }
 
 template <>
-bool FrameEntity::operator!= <byte_exposed_t>(byte_exposed_t other) const
+bool FrameEntity::operator!=
+<byte_exposed_t>(byte_exposed_t
+other) const
 {
-    return this->storage != other;
+return this->storage !=
+other;
 }
 
 FrameEntity::Iterator::Iterator(FrameEntity *parentFrame, size_t bitNumber)
@@ -208,5 +224,54 @@ FrameEntity &FrameEntity::operator>>=(byte_t i)
 FrameEntity &FrameEntity::operator<<=(byte_t i)
 {
     this->storage = this->storage << i;
+    return *this;
+}
+
+FrameEntity FrameEntity::operator()(size_t beginIndex, size_t endIndex, bool defaultSet) const
+{
+    if (!this->spliceIsValid(beginIndex, endIndex))
+    {
+        throw std::invalid_argument{"Invalid range passed: [" + std::to_string(beginIndex)
+                                    + " - " + std::to_string(endIndex) + "]. Max valid range: [0 - "
+                                    + std::to_string(FrameEntity::bits - 1) + "]."};
+    }
+
+    byte_exposed_t temporary{defaultSet};
+    const auto copyDistance = endIndex - beginIndex + 1;
+    for (auto i = 0u; i < copyDistance; ++i)
+    {
+        temporary[i] = this->storage[beginIndex + i];
+    }
+    return FrameEntity{temporary};
+}
+
+bool FrameEntity::spliceIsValid(size_t beginIndex, size_t endIndex) const
+{
+    if (beginIndex > endIndex)
+    {
+        return false;
+    }
+
+    if (beginIndex >= FrameEntity::bits)
+    {
+        return false;
+    }
+
+    if (endIndex >= FrameEntity::bits)
+    {
+        return false;
+    }
+
+    return true;
+}
+
+FrameEntity& FrameEntity::reverse()
+{
+    byte_exposed_t temporary;
+    for(auto i = 0u; i < FrameEntity::bits; ++i)
+    {
+        temporary[i] = this->storage[FrameEntity::bits - 1 - i];
+    }
+    this->storage = temporary;
     return *this;
 }

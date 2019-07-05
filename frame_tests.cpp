@@ -34,7 +34,7 @@ FrameEntity getFrame()
     return x;
 }
 
-TEST_CASE("Memory: frame entity bitwise operatos", "[memory][Frame]")
+TEST_CASE("Memory: frame entity bitwise operators", "[memory][Frame]")
 {
     SECTION("~")
     {
@@ -44,6 +44,158 @@ TEST_CASE("Memory: frame entity bitwise operatos", "[memory][Frame]")
         REQUIRE(f == expectedValue);
         REQUIRE(f[0] == 1);
         REQUIRE(f[7] == 0);
+    }
+
+    SECTION("&")
+    {
+        constexpr byte_t first = 0b11100011u;
+        constexpr byte_t second = 0b00100001u;
+        constexpr byte_t expectedValue = first & second;
+        FrameEntity f{byte_t{first}};
+        FrameEntity g{byte_t{second}};
+        f = f & g;
+        REQUIRE(f == expectedValue);
+    }
+
+    SECTION("|")
+    {
+        constexpr byte_t first = 0b11100011u;
+        constexpr byte_t second = 0b00100001u;
+        constexpr byte_t expectedValue = first | second;
+        FrameEntity f{byte_t{first}};
+        FrameEntity g{byte_t{second}};
+        f = f | g;
+        REQUIRE(f == expectedValue);
+    }
+
+    SECTION("^")
+    {
+        constexpr byte_t first = 0b11100011u;
+        constexpr byte_t second = 0b00100001u;
+        constexpr byte_t expectedValue = first ^second;
+        FrameEntity f{byte_t{first}};
+        FrameEntity g{byte_t{second}};
+        f = f ^ g;
+        REQUIRE(f == expectedValue);
+    }
+
+    SECTION(">>")
+    {
+        constexpr byte_t first = 0b11100011u;
+        constexpr byte_t second = 0b00100001u;
+        constexpr byte_t expectedValue = first >> 2;
+        FrameEntity f{byte_t{first}};
+        FrameEntity g{byte_t{second}};
+        f = f >> byte_t(2);
+        REQUIRE(f == expectedValue);
+    }
+
+    SECTION("<<")
+    {
+        constexpr byte_t first = 0b11100011u;
+        constexpr byte_t second = 0b00100001u;
+        constexpr byte_t expectedValue = first << 2;
+        FrameEntity f{byte_t{first}};
+        FrameEntity g{byte_t{second}};
+        f = f << byte_t(2);
+        REQUIRE(f == expectedValue);
+    }
+
+    SECTION("&=")
+    {
+        constexpr byte_t first = 0b11100011u;
+        constexpr byte_t second = 0b00100001u;
+        constexpr byte_t expectedValue = first & second;
+        FrameEntity f{byte_t{first}};
+        FrameEntity g{byte_t{second}};
+        f &= g;
+        REQUIRE(f == expectedValue);
+    }
+
+    SECTION("^=")
+    {
+        constexpr byte_t first = 0b11100011u;
+        constexpr byte_t second = 0b00100001u;
+        constexpr byte_t expectedValue = first ^second;
+        FrameEntity f{byte_t{first}};
+        FrameEntity g{byte_t{second}};
+        f ^= g;
+        REQUIRE(f == expectedValue);
+    }
+
+    SECTION("|=")
+    {
+        constexpr byte_t first = 0b11100011u;
+        constexpr byte_t second = 0b00100001u;
+        constexpr byte_t expectedValue = first | second;
+        FrameEntity f{byte_t{first}};
+        FrameEntity g{byte_t{second}};
+        f |= g;
+        REQUIRE(f == expectedValue);
+    }
+
+    SECTION(">>=")
+    {
+        constexpr byte_t first = 0b11100011u;
+        constexpr byte_t second = 0b00100001u;
+        constexpr byte_t expectedValue = first >> 2;
+        FrameEntity f{byte_t{first}};
+        FrameEntity g{byte_t{second}};
+        f >>= byte_t(2);
+        REQUIRE(f == expectedValue);
+    }
+
+    SECTION("<<=")
+    {
+        constexpr byte_t first = 0b11100011u;
+        constexpr byte_t second = 0b00100001u;
+        constexpr byte_t expectedValue = first << 2;
+        FrameEntity f{byte_t{first}};
+        FrameEntity g{byte_t{second}};
+        f <<= byte_t(2);
+        REQUIRE(f == expectedValue);
+    }
+}
+
+TEST_CASE("Memory: frame entity clip", "[memory][Frame]")
+{
+    SECTION("Clipping - valid range")
+    {
+        //                         index: 7654 3210
+        constexpr byte_t original = 0b1110'0011;
+
+        constexpr byte_t expected_0_1 = 0b0000'0011;
+        constexpr byte_t expected_0_6 = 0b0110'0011;
+        constexpr byte_t expected_1_7 = 0b0111'0001;
+        constexpr byte_t expected_3_7 = 0b0001'1100;
+        constexpr byte_t expected_2_5 = 0b0000'1000;
+        constexpr byte_t expected_0_0 = 0b0000'0001;
+        constexpr byte_t expected_7_7 = 0b0000'0001;
+        constexpr byte_t expected_0_7 = 0b1110'0011;
+
+        const FrameEntity f{original};
+        REQUIRE(f(0, 1) == expected_0_1);
+        REQUIRE(f(0, 6) == expected_0_6);
+        REQUIRE(f(1, 7) == expected_1_7);
+        REQUIRE(f(3, 7) == expected_3_7);
+        REQUIRE(f(2, 5) == expected_2_5);
+        REQUIRE(f(2, 5) == expected_2_5);
+        REQUIRE(f(0, 0) == expected_0_0);
+        REQUIRE(f(7, 7) == expected_7_7);
+        REQUIRE(f(0, 7) == expected_0_7);
+    }
+
+    SECTION("Clipping - invalid range")
+    {
+        const FrameEntity f{};
+
+        REQUIRE_THROWS(f(-1, 5));
+        REQUIRE_THROWS(f(5, 4));
+        REQUIRE_THROWS(f(4, 8));
+        REQUIRE_THROWS(f(8, 8));
+        REQUIRE_THROWS(f(8, 15));
+        REQUIRE_THROWS(f(0, 8));
+        REQUIRE_THROWS(f(20, 15));
     }
 }
 
@@ -333,12 +485,48 @@ TEST_CASE("Memory: frame insert", "[memory][Frame]")
     }
 }
 
-void expect1_2_3(uint8_t table[], size_t size)
+void expect1_2_3(const uint8_t table[], size_t size)
 {
     REQUIRE(size == 3);
     REQUIRE(table[0] == 1);
     REQUIRE(table[1] == 2);
     REQUIRE(table[2] == 3);
+}
+
+TEST_CASE("readme example")
+{
+    // constructing from std-like containers:
+    const std::vector<uint8_t> v{0xDE, 0xAD, 0xBE, 0xEF};
+    const Frame f{v};
+
+    // access to byte range:
+    const Frame beef = f(2, 3);
+    REQUIRE(beef == Frame{0xBE, 0xEF}); // ...and constructing from initializer list
+
+    // access to single byte:
+    const FrameEntity ad = f[1];
+    REQUIRE(ad == 0xAD); // ...and comparing bytes
+
+    // access to single bit (0 - least significant bit):
+    REQUIRE(ad == 0b10101101);
+    REQUIRE(ad[0] == 1); // ...and comparing bits
+    REQUIRE(ad[1] == 0);
+    REQUIRE(ad[2] == 1);
+    REQUIRE(ad[3] == 1);
+
+    // access to range of bits:
+    REQUIRE(ad(0, 3) == 0b1101);
+
+    // appending frames:
+    auto fbeef = f + beef;
+    REQUIRE(fbeef == Frame{0xDE, 0xAD, 0xBE, 0xEF, 0xBE, 0xEF});
+
+    fbeef += 0;
+    REQUIRE(fbeef == Frame{0xDE, 0xAD, 0xBE, 0xEF, 0xBE, 0xEF, 0x00});
+
+    // get second, third and fourth bits from third byte:
+    auto foo = f[3](1, 3);
+    REQUIRE(foo == 0b111);
 }
 
 TEST_CASE("Memory: reverse", "[memory][Frame]")
